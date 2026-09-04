@@ -41,6 +41,7 @@ export abstract class BaseSseProvider implements AIProviderAdapter {
                 body: JSON.stringify(await this.buildRequestBody(request)),
             });
         } catch {
+            if (request.signal?.aborted) return;
             onEvent({ type: 'error', error: { code: 'network', message: 'Sem ligação à internet.', retryable: true } });
             return;
         }
@@ -74,6 +75,7 @@ export abstract class BaseSseProvider implements AIProviderAdapter {
             }
             onEvent({ type: 'done' });
         } catch {
+            if (request.signal?.aborted) return;
             onEvent({ type: 'error', error: { code: 'network', message: `A ligação a ${this.providerName} foi interrompida.`, retryable: true } });
         } finally {
             reader.releaseLock();

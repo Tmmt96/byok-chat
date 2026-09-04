@@ -1603,6 +1603,21 @@
 			],
 			"isBackground": false,
 			"problemMatcher": []
+		},
+		{
+			"label": "Test Android Stop Controls",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_android_controls.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"12"
+			],
+			"isBackground": false,
+			"problemMatcher": []
 		}
 	]
 }

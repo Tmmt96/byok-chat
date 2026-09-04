@@ -42,19 +42,22 @@ import {
     Settings2,
     ShieldCheck,
     Sparkles,
+    Square,
     Trash2,
     Volume2,
     X,
 } from 'lucide-react-native';
 import { assembleProjectContext } from './src/domain/project-context';
+import { createConversationTitle } from './src/domain/conversation-title';
 import type { Conversation, CustomProviderProfile, Message, Project, ResponseMode } from './src/domain/types';
 import { seedConversations, seedProjects } from './src/data/seed';
-import { initializeDatabase } from './src/infrastructure/database';
+import { initializeDatabase, loadAppData, saveAppData } from './src/infrastructure/database';
 import { secureStore } from './src/infrastructure/secure-store';
 import { streamProvider } from './src/providers';
 import { testCustomApiConnection } from './src/providers/custom-api';
 import { availableModels, initialModel, maxResponseTokens, type ModelDefinition } from './src/features/models';
 import { stripMarkdownForSpeech } from './src/features/markdown';
+import { speakResponse } from './src/features/voice';
 import { colors, palette } from './src/theme';
 import { styles } from './src/theme.styles';
 
@@ -98,6 +101,7 @@ export default function App() {
     const [responseMode, setResponseMode] = useState<ResponseMode>('text');
     const [editingMessageId, setEditingMessageId] = useState<string | undefined>(undefined);
     const [isStreaming, setIsStreaming] = useState(false);
+    const streamAbortController = useRef<AbortController | null>(null);
     const [modelSheetOpen, setModelSheetOpen] = useState(false);
     const [voiceSheetOpen, setVoiceSheetOpen] = useState(false);
     const [chatOptionsOpen, setChatOptionsOpen] = useState(false);
@@ -108,6 +112,8 @@ export default function App() {
     const [newProjectName, setNewProjectName] = useState('');
     const [availableVoices, setAvailableVoices] = useState<Speech.Voice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<string | undefined>();
+    const [speakingMessageId, setSpeakingMessageId] = useState<string>();
+    const speakingRequestId = useRef(0);
     const [apiKey, setApiKey] = useState('');
     const [keyConfigured, setKeyConfigured] = useState(false);
     const [openAIKeySheetOpen, setOpenAIKeySheetOpen] = useState(false);
@@ -118,6 +124,7 @@ export default function App() {
     const [nameDraft, setNameDraft] = useState('');
     const [profileSheetOpen, setProfileSheetOpen] = useState(false);
     const [paletteId, setPaletteId] = useState('terra');
+    const [storageReady, setStorageReady] = useState(false);
 
     const activeConversation = conversations.find((conversation) => conversation.id === activeConversationId);
     const activeProject = projects.find((project) => project.id === activeProjectId);
@@ -128,6 +135,17 @@ export default function App() {
 
     useEffect(() => {
         initializeDatabase();
+        const storedData = loadAppData();
+        if (storedData.initialized) {
+            setProjects(storedData.projects);
+            setConversations(storedData.conversations);
+            const firstConversation = storedData.conversations[0];
+            setActiveConversationId(firstConversation?.id ?? '');
+            setActiveProjectId(firstConversation?.projectId);
+        } else {
+            saveAppData(seedProjects, seedConversations);
+        }
+        setStorageReady(true);
         void secureStore.getUserName().then((value) => {
             setUserName(value ?? '');
             setNameDraft(value ?? '');
@@ -141,6 +159,11 @@ export default function App() {
             setSelectedVoice(portuguese[0]?.identifier);
         });
     }, []);
+
+    useEffect(() => {
+        if (!storageReady) return;
+        saveAppData(projects, conversations);
+    }, [conversations, projects, storageReady]);
 
     useEffect(() => {
         if (Platform.OS !== 'android') return undefined;
@@ -288,6 +311,8 @@ export default function App() {
         const assistantMessage: Message = { id: assistantId, role: 'assistant', content: '', createdAt: Date.now() + 1, status: 'streaming' };
         const editedMessageIndex = editingMessageId ? activeConversation.messages.findIndex((message) => message.id === editingMessageId) : -1;
         const conversationMessages = editedMessageIndex >= 0 ? activeConversation.messages.slice(0, editedMessageIndex) : activeConversation.messages;
+        const shouldSetTitle = editedMessageIndex === 0 || !activeConversation.messages.some((message) => message.role === 'user');
+        const conversationTitle = shouldSetTitle ? createConversationTitle(content) : activeConversation.title;
         const contextConversations = editedMessageIndex >= 0
             ? conversations.map((conversation) => conversation.id === activeConversation.id ? { ...conversation, messages: conversationMessages } : conversation)
             : conversations;
@@ -298,21 +323,27 @@ export default function App() {
             };
 
         setConversations((current) => current.map((conversation) => conversation.id === activeConversation.id
-            ? { ...conversation, updatedAt: Date.now(), messages: [...conversationMessages, userMessage, assistantMessage] }
+            ? { ...conversation, title: conversationTitle, updatedAt: Date.now(), messages: [...conversationMessages, userMessage, assistantMessage] }
             : conversation));
         setDraft('');
         setEditingMessageId(undefined);
         setIsStreaming(true);
+        const abortController = new AbortController();
+        streamAbortController.current = abortController;
 
         try {
             const model = models.find((candidate) => candidate.id === activeConversation.modelId) ?? initialModel;
-            await streamProvider(model.providerId, { model: activeConversation.modelId, providerConfigId: model.providerId === 'custom' ? model.id : undefined, input: context.input, maxOutputTokens: maxResponseTokens }, (event) => {
+            await streamProvider(model.providerId, { model: activeConversation.modelId, providerConfigId: model.providerId === 'custom' ? model.id : undefined, input: context.input, maxOutputTokens: maxResponseTokens, signal: abortController.signal }, (event) => {
                 if (event.type === 'text_delta') {
                     setConversations((current) => current.map((conversation) => conversation.id === activeConversation.id
                         ? { ...conversation, messages: conversation.messages.map((message) => message.id === assistantId ? { ...message, content: message.content + event.text } : message) }
                         : conversation));
                 }
                 if (event.type === 'error') {
+                    if (abortController.signal.aborted) {
+                        setIsStreaming(false);
+                        return;
+                    }
                     setConversations((current) => current.map((conversation) => conversation.id === activeConversation.id
                         ? { ...conversation, messages: conversation.messages.map((message) => message.id === assistantId ? { ...message, content: event.error.message, status: 'failed' } : message) }
                         : conversation));
@@ -320,8 +351,20 @@ export default function App() {
                 if (event.type === 'done' || event.type === 'error') setIsStreaming(false);
             });
         } finally {
+            if (streamAbortController.current === abortController) streamAbortController.current = null;
             setIsStreaming(false);
         }
+    };
+
+    const stopStreaming = () => {
+        const abortController = streamAbortController.current;
+        if (!abortController) return;
+        abortController.abort();
+        streamAbortController.current = null;
+        setConversations((current) => current.map((conversation) => conversation.id === activeConversationId
+            ? { ...conversation, messages: conversation.messages.map((message) => message.status === 'streaming' ? { ...message, status: 'completed' } : message) }
+            : conversation));
+        setIsStreaming(false);
     };
 
     const startDictation = async () => {
@@ -330,12 +373,35 @@ export default function App() {
         ExpoSpeechRecognitionModule.start({ lang: 'pt-PT', interimResults: true, continuous: false });
     };
 
-    const speakLastResponse = () => {
-        const message = activeConversation?.messages.slice().reverse().find((item) => item.role === 'assistant' && item.content);
-        if (!message) return;
+    const stopSpeaking = () => {
+        speakingRequestId.current += 1;
         Speech.stop();
-        Speech.speak(stripMarkdownForSpeech(message.content), { voice: selectedVoice, language: 'pt-PT', rate: 0.95 });
+        setSpeakingMessageId(undefined);
     };
+
+    const speakMessage = (message: Message) => {
+        const speechText = stripMarkdownForSpeech(message.content);
+        if (!speechText) return;
+        const requestId = ++speakingRequestId.current;
+        Speech.stop();
+        setSpeakingMessageId(message.id);
+        const finishSpeaking = () => {
+            if (speakingRequestId.current === requestId) setSpeakingMessageId(undefined);
+        };
+        speakResponse(speechText, selectedVoice, { onDone: finishSpeaking, onStopped: finishSpeaking, onError: finishSpeaking });
+    };
+
+    useEffect(() => {
+        if (tab !== 'chat') {
+            stopSpeaking();
+            stopStreaming();
+        }
+    }, [tab]);
+
+    useEffect(() => () => {
+        stopSpeaking();
+        streamAbortController.current?.abort();
+    }, []);
 
     const saveKey = async () => {
         if (!apiKey.trim()) return;
@@ -443,14 +509,17 @@ export default function App() {
                         responseMode={responseMode}
                         isStreaming={isStreaming}
                         editingMessageId={editingMessageId}
-                        onBack={() => setTab('home')}
+                        onBack={() => { stopSpeaking(); stopStreaming(); setTab('home'); }}
                         onDraftChange={setDraft}
                         onModeChange={setResponseMode}
                         onMorePress={() => setChatOptionsOpen(true)}
                         onModelPress={() => setModelSheetOpen(true)}
                         onMicPress={startDictation}
                         onSend={sendMessage}
-                        onSpeak={speakLastResponse}
+                        onStop={stopStreaming}
+                        onSpeak={speakMessage}
+                        onStopSpeaking={stopSpeaking}
+                        speakingMessageId={speakingMessageId}
                         onEditMessage={editMessage}
                         onCopyResponse={copyResponse}
                     />
@@ -568,14 +637,14 @@ function ChatScreenLegacy({ conversation, project, draft, responseMode, isStream
     onModelPress: () => void;
     onMicPress: () => void;
     onSend: () => void;
-    onSpeak: () => void;
+    onSpeak: (message: Message) => void;
 }) {
     const model = availableModels.find((candidate) => candidate.id === conversation.modelId);
     const keyboardOpen = useKeyboardHeight() > 0;
     return <KeyboardAvoidingView style={styles.chatLayout} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={0}><View style={styles.chatHeader}><Pressable onPress={onBack} style={styles.headerButton} accessibilityLabel="Voltar"><ChevronLeft size={22} color={colors.deep} /></Pressable><View style={styles.chatTitleWrap}><Text style={styles.chatTitle}>{project?.name ?? conversation.title}</Text><Text style={styles.chatSubtitle}>{project ? 'Nova conversa · projeto' : 'OpenAI · GPT-5.6 Luna'}</Text></View><View style={styles.modeSwitch}><Pressable onPress={() => onModeChange('text')} accessibilityLabel="Modo texto" style={[styles.modeItem, responseMode === 'text' && styles.modeActive]}><Text style={[styles.modeText, responseMode === 'text' && styles.modeTextActive]}>Texto</Text></Pressable><Pressable onPress={() => onModeChange('voice')} accessibilityLabel="Modo voz" style={[styles.modeItem, responseMode === 'voice' && styles.modeActive]}><Text style={[styles.modeText, responseMode === 'voice' && styles.modeTextActive]}>Voz</Text></Pressable></View><Pressable onPress={onMorePress} style={styles.headerButton} accessibilityLabel="Mais opções"><MoreHorizontal size={20} color={colors.muted} /></Pressable></View>{project && <View style={styles.projectContext}><View><Text style={styles.projectContextTitle}>Contexto do projeto</Text><Text style={styles.projectContextSub}>Todas as conversas · {project ? 'incluídas' : ''}</Text></View><Text style={styles.infoIcon}>i</Text></View>}<FlatList data={conversation.messages} keyExtractor={(message) => message.id} contentContainerStyle={styles.messages} renderItem={({ item }) => <MessageBubble message={item} onSpeak={item.role === 'assistant' ? onSpeak : undefined} />} ListEmptyComponent={<View style={styles.emptyChat}><Sparkles size={22} color={colors.terracotta} /><Text style={styles.emptyChatTitle}>Começa pelo que tens em mente.</Text><Text style={styles.emptyChatText}>Esta conversa pode usar o contexto completo do projeto.</Text></View>} /><View style={[styles.composer, keyboardOpen && styles.composerKeyboardOpen]}><Pressable onPress={onModelPress} accessibilityLabel="Escolher modelo" style={styles.modelSelect}><View style={styles.modelDot} /><Text style={styles.modelText}>{model?.name ?? conversation.modelId}</Text><ChevronDown size={14} color={colors.terracotta} /></Pressable><TextInput value={draft} onChangeText={onDraftChange} placeholder="Escreve uma mensagem..." placeholderTextColor={colors.muted} multiline style={styles.composerInput} accessibilityLabel="Prompt" /><View style={styles.composerActions}><Pressable onPress={onMicPress} style={styles.micButton} accessibilityLabel="Ditar prompt"><Mic size={19} color={colors.deep} /></Pressable><Pressable onPress={onSend} disabled={isStreaming || !draft.trim()} style={[styles.sendButton, (!draft.trim() || isStreaming) && styles.sendDisabled]} accessibilityLabel="Enviar prompt"><ArrowUp size={19} color={colors.surface} /></Pressable></View></View><Text style={styles.directNote}>{responseMode === 'voice' ? 'Resposta por voz · texto mantido' : 'Resposta por texto · mudar para Voz'}</Text></KeyboardAvoidingView>;
 }
 
-function ChatScreen({ conversation, project, models, draft, responseMode, isStreaming, editingMessageId, onBack, onDraftChange, onModeChange, onMorePress, onModelPress, onMicPress, onSend, onSpeak, onEditMessage, onCopyResponse }: {
+function ChatScreen({ conversation, project, models, draft, responseMode, isStreaming, editingMessageId, onBack, onDraftChange, onModeChange, onMorePress, onModelPress, onMicPress, onSend, onStop, onSpeak, onStopSpeaking, speakingMessageId, onEditMessage, onCopyResponse }: {
     conversation: Conversation;
     project?: Project;
     models: ModelDefinition[];
@@ -590,7 +659,10 @@ function ChatScreen({ conversation, project, models, draft, responseMode, isStre
     onModelPress: () => void;
     onMicPress: () => void;
     onSend: () => void;
-    onSpeak: () => void;
+    onStop: () => void;
+    onSpeak: (message: Message) => void;
+    onStopSpeaking: () => void;
+    speakingMessageId?: string;
     onEditMessage?: (message: Message) => void;
     onCopyResponse?: (content: string) => void;
 }) {
@@ -645,12 +717,12 @@ function ChatScreen({ conversation, project, models, draft, responseMode, isStre
                 }
                 const distanceFromEnd = height - listViewportHeight - listScrollOffset.current;
                 setShowScrollToEnd(distanceFromEnd > windowHeight * 0.06 && height > listViewportHeight);
-            }} renderItem={({ item }) => <MessageBubble message={item} onSpeak={item.role === 'assistant' ? onSpeak : undefined} onEditMessage={onEditMessage} onCopyResponse={onCopyResponse} isEditing={item.role === 'user' && editingMessageId === item.id} />} ListEmptyComponent={<View style={styles.emptyChat}><Sparkles size={22} color={colors.terracotta} /><Text style={styles.emptyChatTitle}>Começa pelo que tens em mente.</Text><Text style={styles.emptyChatText}>Esta conversa pode usar o contexto completo do projeto.</Text></View>} />
+            }} renderItem={({ item }) => <MessageBubble message={item} onSpeak={item.role === 'assistant' ? onSpeak : undefined} onStopSpeaking={onStopSpeaking} isSpeaking={speakingMessageId === item.id} onEditMessage={onEditMessage} onCopyResponse={onCopyResponse} isEditing={item.role === 'user' && editingMessageId === item.id} />} ListEmptyComponent={<View style={styles.emptyChat}><Sparkles size={22} color={colors.terracotta} /><Text style={styles.emptyChatTitle}>Começa pelo que tens em mente.</Text><Text style={styles.emptyChatText}>Esta conversa pode usar o contexto completo do projeto.</Text></View>} />
             {showScrollToEnd && <Pressable onPress={scrollToEnd} accessibilityLabel="Ir para o fim da resposta" style={[styles.scrollToEndButton, { bottom: scrollButtonBottom }]}><ArrowDown size={18} color={colors.surface} /></Pressable>}
             <View accessible accessibilityLabel="Composer" onLayout={(event) => setComposerHeight(event.nativeEvent.layout.height)} style={[styles.composer, { bottom: composerBottom }]}>
                 <Pressable onPress={onModelPress} accessibilityLabel="Escolher modelo" style={styles.modelSelect}><View style={styles.modelDot} /><Text style={styles.modelText}>{model?.name ?? conversation.modelId}</Text><ChevronDown size={14} color={colors.terracotta} /></Pressable>
                 <TextInput ref={composerRef} value={draft} onChangeText={onDraftChange} placeholder="Escreve uma mensagem..." placeholderTextColor={colors.muted} multiline style={styles.composerInput} accessibilityLabel="Prompt" />
-                <View style={styles.composerActions}><Pressable onPress={onMicPress} style={styles.micButton} accessibilityLabel="Ditar prompt"><Mic size={19} color={colors.deep} /></Pressable><Pressable onPress={onSend} disabled={isStreaming || !draft.trim()} style={[styles.sendButton, (!draft.trim() || isStreaming) && styles.sendDisabled]} accessibilityLabel="Enviar prompt"><ArrowUp size={19} color={colors.surface} /></Pressable></View>
+                <View style={styles.composerActions}><Pressable onPress={onMicPress} style={styles.micButton} accessibilityLabel="Ditar prompt"><Mic size={19} color={colors.deep} /></Pressable><Pressable onPress={isStreaming ? onStop : onSend} disabled={!isStreaming && !draft.trim()} style={[styles.sendButton, (!draft.trim() && !isStreaming) && styles.sendDisabled]} accessibilityLabel={isStreaming ? 'Parar resposta' : 'Enviar prompt'}>{isStreaming ? <Square size={17} color={colors.surface} /> : <ArrowUp size={19} color={colors.surface} />}</Pressable></View>
             </View>
             <Text style={[styles.directNote, { bottom: keyboardHeight > 0 ? keyboardHeight + keyboardGap - directNoteGap : windowHeight * 0.011 }]}>{editingMessageId ? 'A editar · reenviar com contexto truncado' : responseMode === 'voice' ? 'Resposta por voz · texto mantido' : 'Resposta por texto · mudar para Voz'}</Text>
         </View>
@@ -678,7 +750,7 @@ function MarkdownText({ content }: { content: string }) {
     })}</View>;
 }
 
-function MessageBubble({ message, onSpeak, onEditMessage, onCopyResponse, isEditing }: { message: Message; onSpeak?: () => void; onEditMessage?: (message: Message) => void; onCopyResponse?: (content: string) => void; isEditing?: boolean }) {
+function MessageBubble({ message, onSpeak, onStopSpeaking, isSpeaking, onEditMessage, onCopyResponse, isEditing }: { message: Message; onSpeak?: (message: Message) => void; onStopSpeaking?: () => void; isSpeaking?: boolean; onEditMessage?: (message: Message) => void; onCopyResponse?: (content: string) => void; isEditing?: boolean }) {
     const [copied, setCopied] = useState(false);
     const handleCopy = async () => {
         if (!onCopyResponse) return;
@@ -687,7 +759,7 @@ function MessageBubble({ message, onSpeak, onEditMessage, onCopyResponse, isEdit
         setTimeout(() => setCopied(false), 1500);
     };
     if (message.role === 'user') return <View style={[styles.userMessage, isEditing && { borderWidth: 1, borderColor: colors.terracotta }]}><Text style={styles.userMessageText}>{message.content}</Text>{onEditMessage && <Pressable onPress={() => onEditMessage(message)} style={{ alignSelf: 'flex-end', marginTop: 6 }} accessibilityLabel="Editar mensagem"><Pencil size={14} color={colors.terracotta} /></Pressable>}</View>;
-    return <View style={styles.assistantMessage}><View style={styles.assistantAvatar}><Sparkles size={13} color={colors.surface} /></View><View style={styles.assistantCopy}>{message.content ? <MarkdownText content={message.content} /> : <TypingIndicator />}{message.content && onSpeak && <Pressable onPress={onSpeak} style={styles.listenButton}><Volume2 size={14} color={colors.terracotta} /><Text style={styles.listenText}>Ouvir resposta</Text></Pressable>}{message.content && onCopyResponse && <Pressable onPress={() => void handleCopy()} style={styles.listenButton} accessibilityLabel={copied ? 'Resposta copiada' : 'Copiar resposta'}><Copy size={14} color={colors.terracotta} /><Text style={styles.listenText}>{copied ? 'Copiado' : 'Copiar resposta'}</Text></Pressable>}</View></View>;
+    return <View style={styles.assistantMessage}><View style={styles.assistantAvatar}><Sparkles size={13} color={colors.surface} /></View><View style={styles.assistantCopy}>{message.content ? <MarkdownText content={message.content} /> : <TypingIndicator />}{message.content && (onSpeak || isSpeaking) && <Pressable onPress={() => isSpeaking ? onStopSpeaking?.() : onSpeak?.(message)} style={styles.listenButton} accessibilityLabel={isSpeaking ? 'Parar de ouvir' : 'Ouvir resposta'}>{isSpeaking ? <Square size={14} color={colors.terracotta} /> : <Volume2 size={14} color={colors.terracotta} />}<Text style={styles.listenText}>{isSpeaking ? 'Parar de ouvir' : 'Ouvir resposta'}</Text></Pressable>}{message.content && onCopyResponse && <Pressable onPress={() => void handleCopy()} style={styles.listenButton} accessibilityLabel={copied ? 'Resposta copiada' : 'Copiar resposta'}><Copy size={14} color={colors.terracotta} /><Text style={styles.listenText}>{copied ? 'Copiado' : 'Copiar resposta'}</Text></Pressable>}</View></View>;
 }
 
 function TypingIndicator() {

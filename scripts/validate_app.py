@@ -276,6 +276,11 @@ class Validator:
             time.sleep(0.4)
         return False
 
+    def scroll_home_to_top(self) -> None:
+        _, height, _, _ = self.display_metrics()
+        self.adb(["shell", "input", "swipe", "540", str(round(height * 0.3)), "540", str(round(height * 0.82)), "350"])
+        time.sleep(0.4)
+
     def back(self) -> None:
         self.adb(["shell", "input", "keyevent", "4"])
         time.sleep(0.5)
@@ -303,11 +308,17 @@ class Validator:
             self.add("ui:profile-name", "PASS", "nome local Tiago já configurado")
 
         def exercise(name: str, tap: str, expected: str) -> bool:
-            if not self.wait_for_label(tap):
+            home_exercises = {"new-conversation", "project-context", "conversation-project-modal", "bottom-chat"}
+            if name in home_exercises and not self.wait_for_label(tap, timeout=1):
+                self.scroll_home_to_top()
+            tap_label = tap
+            if name == "new-conversation" and not self.wait_for_label(tap_label, timeout=1):
+                tap_label = "Nova conversa pelo menu"
+            if not self.wait_for_label(tap_label):
                 self.add(f"ui:{name}", "FAIL", f"controlo nao encontrado: {tap}")
                 return False
-            if not self.tap_label(tap):
-                self.add(f"ui:{name}", "FAIL", f"nao foi possivel tocar: {tap}")
+            if not self.tap_label(tap_label):
+                self.add(f"ui:{name}", "FAIL", f"nao foi possivel tocar: {tap_label}")
                 return False
             passed = self.wait_for_label(expected)
             safe = True
