@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" role="img" aria-labelledby="title desc">
+  <title id="title">BYOK Chat, identidade terracota</title>
+  <desc id="desc">Composição abstrata com um sol, uma janela de conversa e pontos de ligação em tons terracota.</desc>
+  <rect width="1200" height="780" rx="54" fill="#FCF5F0"/>
+  <circle cx="962" cy="148" r="108" fill="#F1C2B0"/>
+  <circle cx="962" cy="148" r="65" fill="#D98168"/>
+  <path d="M0 630 C170 530 290 570 420 646 C565 731 735 738 864 637 C1002 529 1091 562 1200 616 V780 H0Z" fill="#E4A38C"/>
+  <path d="M0 696 C176 603 302 659 446 716 C598 777 781 758 917 686 C1029 627 1113 641 1200 683 V780 H0Z" fill="#945445"/>
+  <path d="M252 160 h482 a42 42 0 0 1 42 42 v205 a42 42 0 0 1-42 42 H500 l-90 78 16-78 H252 a42 42 0 0 1-42-42 V202 a42 42 0 0 1 42-42Z" fill="#FFFCF9" stroke="#945445" stroke-width="12"/>
+  <path d="M314 252 h272" stroke="#D98168" stroke-width="18" stroke-linecap="round"/>
+  <path d="M314 312 h190" stroke="#E4A38C" stroke-width="18" stroke-linecap="round"/>
+  <path d="M314 372 h238" stroke="#F1C2B0" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="276" cy="542" r="18" fill="#D98168"/>
+  <circle cx="342" cy="510" r="11" fill="#F1C2B0"/>
+  <circle cx="1080" cy="454" r="14" fill="#FFFCF9"/>
+  <path d="M1030 390 l50 64 50-64" fill="none" stroke="#FFFCF9" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,45 @@
+{
+    "expo": {
+        "name": "BYOK Chat",
+        "slug": "byok-chat",
+        "version": "0.1.0",
+        "orientation": "portrait",
+        "userInterfaceStyle": "light",
+        "scheme": "byokchat",
+        "ios": {
+            "supportsTablet": true,
+            "deploymentTarget": "15.0",
+            "bundleIdentifier": "com.byokchat.mobile",
+            "infoPlist": {
+                "NSSpeechRecognitionUsageDescription": "O BYOK Chat usa o reconhecimento de voz para transformar a sua fala numa prompt editável.",
+                "NSMicrophoneUsageDescription": "O BYOK Chat usa o microfone apenas quando inicia o ditado."
+            }
+        },
+        "android": {
+            "minSdkVersion": 29,
+            "package": "com.byokchat.mobile",
+            "permissions": [
+                "android.permission.RECORD_AUDIO"
+            ]
+        },
+        "plugins": [
+            "expo-secure-store",
+            "expo-sqlite",
+            [
+                "expo-speech-recognition",
+                {
+                    "microphonePermission": "Permitir que o BYOK Chat use o microfone para ditar prompts.",
+                    "speechRecognitionPermission": "Permitir que o BYOK Chat converta a sua voz em texto."
+                }
+            ]
+        ],
+        "extra": {
+            "initialProvider": "openai",
+            "initialModel": "gpt-5.6-luna",
+            "privacy": {
+                "directProviderRequests": true,
+                "localHistory": true
+            }
+        }
+    }
+}

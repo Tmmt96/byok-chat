@@ -1,0 +1,1608 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start BYOK Chat Expo Web",
+			"type": "shell",
+			"command": "node",
+			"args": [
+				".\\node_modules\\@expo\\cli\\main.js",
+				"start",
+				"--web"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Repair Android NDK",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\scripts\\repair-android-sdk.ps1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Build Android APK Debug",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-Command",
+				"Set-Location '.\\android'; $env:JAVA_HOME='C:\\Program Files\\Android\\Android Studio\\jbr'; $env:ANDROID_HOME=\"$env:LOCALAPPDATA\\Android\\Sdk\"; $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME; .\\gradlew.bat app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Android APK Debug Direct",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"cd /d \"C:\\Users\\Askblue\\Desktop\\Tiago\\app IA\\android\" && \"C:\\Users\\Askblue\\Desktop\\Tiago\\app IA\\android\\gradlew.bat\" app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Android APK Wrapper",
+			"type": "shell",
+			"command": ".\\android\\gradlew.bat",
+			"args": [
+				"--project-dir",
+				".\\android",
+				"app:assembleDebug",
+				"--no-daemon",
+				"--console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Android APK Java17",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set PATH=%JAVA_HOME%\\bin;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build Android APK Full SDK",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set ANDROID_HOME=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set ANDROID_SDK_ROOT=%ANDROID_HOME%&&set PATH=%JAVA_HOME%\\bin;%ANDROID_HOME%\\platform-tools;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Finalize Android NDK",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"rmdir /s /q C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 2>nul && mkdir C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 && tar.exe -xf C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\PackageOperation01\\android-ndk-r27b-windows.zip -C C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Download Android NDK Reliable",
+			"type": "shell",
+			"command": "curl.exe",
+			"args": [
+				"-L",
+				"--fail",
+				"--retry",
+				"5",
+				"--retry-delay",
+				"3",
+				"--output",
+				"C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\android-ndk-r27b-windows.zip",
+				"https://dl.google.com/android/repository/android-ndk-r27b-windows.zip"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Extract Android NDK Complete",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"rmdir /s /q C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract 2>nul && mkdir C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract && tar.exe -xf C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\android-ndk-r27b-windows.zip -C C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract && rmdir /s /q C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 2>nul && move C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract\\android-ndk-r27b C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 && if exist C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006\\source.properties (echo NDK_READY) else (exit /b 1)"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Extract Android NDK Retry",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"if exist C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract rmdir /s /q C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract && mkdir C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract && tar.exe -xf C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\android-ndk-r27b-windows.zip -C C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract && if exist C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 rmdir /s /q C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 && move C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\.temp\\ndk-extract\\android-ndk-r27b C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006 && if exist C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\ndk\\27.1.12297006\\source.properties (echo NDK_READY) else (exit /b 1)"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build APK Final",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set ANDROID_HOME=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set ANDROID_SDK_ROOT=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set PATH=C:\\Program Files\\Android\\Android Studio\\jbr\\bin;C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Check Android Java",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"\"C:\\Program Files\\Android\\Android Studio\\jbr\\bin\\java.exe\" -version"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Diagnose Expo CMake",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set ANDROID_HOME=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set ANDROID_SDK_ROOT=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set PATH=C:\\Program Files\\Android\\Android Studio\\jbr\\bin;C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android :expo-modules-core:configureCMakeDebug[arm64-v8a] --stacktrace --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Diagnose CMake APK",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set ANDROID_HOME=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set ANDROID_SDK_ROOT=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set PATH=C:\\Program Files\\Android\\Android Studio\\jbr\\bin;C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android :expo-modules-core:configureCMakeDebug[arm64-v8a] --stacktrace --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Build APK Native Access",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"set JAVA_HOME=C:\\Program Files\\Android\\Android Studio\\jbr&&set ANDROID_HOME=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set ANDROID_SDK_ROOT=C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk&&set JAVA_TOOL_OPTIONS=--enable-native-access=ALL-UNNAMED&&set PATH=C:\\Program Files\\Android\\Android Studio\\jbr\\bin;C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools;%PATH%&&.\\android\\gradlew.bat --project-dir .\\android app:assembleDebug --no-daemon --console=plain"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Check Samsung ADB",
+			"type": "shell",
+			"command": "adb.exe",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Samsung ADB Full Path",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart ADB Authorization",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"kill-server"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Request ADB Authorization",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Refresh Samsung ADB",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"reconnect"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Samsung Authorization",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Samsung Ready",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"devices",
+				"-l"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Install BYOK Chat APK",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"install",
+				"-r",
+				"C:\\Users\\Askblue\\Desktop\\Tiago\\app IA\\android\\app\\build\\outputs\\apk\\debug\\app-debug.apk"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Launch BYOK Chat Device",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"monkey",
+				"-p",
+				"com.byokchat.mobile",
+				"-c",
+				"android.intent.category.LAUNCHER",
+				"1"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify BYOK Chat Running",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"dumpsys",
+				"activity",
+				"activities"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Confirm BYOK Chat Activity",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"cmd",
+				"activity",
+				"get-top-activity"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify BYOK Chat Package",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"cmd",
+				"package",
+				"resolve-activity",
+				"--brief",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Connect Metro Samsung",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"reverse",
+				"tcp:8081",
+				"tcp:8081"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Reload BYOK Chat Samsung",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"force-stop",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Open BYOK Chat Samsung",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"start",
+				"-n",
+				"com.byokchat.mobile/.MainActivity"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Android Script Logs",
+			"type": "shell",
+			"command": "cmd.exe",
+			"args": [
+				"/d",
+				"/c",
+				"C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe -s RFCX70QSR0Z logcat -d -t 300 | findstr /i \"Unable to load script ReactNativeJS FATAL EXCEPTION\""
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify BYOK Chat Process",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"pidof",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android Script Help",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\build-android-release.ps1",
+				"-?"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android Release Script",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\build-android-release.ps1",
+				"-Architectures",
+				"arm64-v8a"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Validate Android Release Script Retry",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-NoProfile",
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				".\\scripts\\build-android-release.ps1",
+				"-Architectures",
+				"arm64-v8a"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Reload Safe Area Android",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"reverse",
+				"tcp:8081",
+				"tcp:8081"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart Safe Area App",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"force-stop",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Launch Safe Area App",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"start",
+				"-n",
+				"com.byokchat.mobile/.MainActivity"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Refresh Android Metro Tunnel",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"reverse",
+				"tcp:8081",
+				"tcp:8081"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart Android UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"force-stop",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Open Updated Android UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"start",
+				"-n",
+				"com.byokchat.mobile/.MainActivity"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Verify Updated Android UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"pidof",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Unit Tests Direct Node",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Python Validators",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py",
+				"scripts\\validate_builds.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android UI Flows",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android UI Flows Retry",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Python Script Syntax",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py",
+				"scripts\\validate_builds.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android UI Flows Final",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Android Runtime Errors",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"logcat",
+				"-d",
+				"-t",
+				"200",
+				"*:E"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Dump Android UI Tree",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"uiautomator",
+				"dump",
+				"/sdcard/byok-chat-uiautomator.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read Android UI Tree",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"exec-out",
+				"cat",
+				"/sdcard/byok-chat-uiautomator.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Wake Android Device",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"input",
+				"keyevent",
+				"82"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Flow Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Local App Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Build Artifact Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_builds.py",
+				"--json"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Android Flow Smoke Test",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Android Flow Smoke Test Unlocked",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Final Flow Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py",
+				"scripts\\validate_builds.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Final Android Flow Smoke",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Local Flow Validation",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final APK Artifact Validation",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_builds.py",
+				"--require-release"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Bounds Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Modal Bounds Android",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Measure All Android Modals",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Modal Bounds Script",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Every Modal Bounds",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Keyboard Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Android Keyboard Layout",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Dump Current Android UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"uiautomator",
+				"dump",
+				"/sdcard/byok-chat-uiautomator.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read Current Android UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"exec-out",
+				"cat",
+				"/sdcard/byok-chat-uiautomator.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Android UI Labels",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-c",
+				"import subprocess,xml.etree.ElementTree as ET; a=r'C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe'; p=subprocess.run([a,'-s','RFCX70QSR0Z','exec-out','cat','/sdcard/byok-chat-uiautomator.xml'],capture_output=True,text=True,encoding='utf-8',errors='replace'); x=p.stdout[p.stdout.find('<hierarchy'):]; root=ET.fromstring(x); [print(n.attrib.get('text',''), '|', n.attrib.get('content-desc',''), '|', n.attrib.get('package','')) for n in root.iter('node') if n.attrib.get('text') or n.attrib.get('content-desc')]"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Keyboard Gap Validator",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Measure Keyboard Visual Gap",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Voice Modal Runtime",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"logcat",
+				"-d",
+				"-t",
+				"300",
+				"*:E"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Voice Flow Only",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Voice App Errors",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"logcat",
+				"-d",
+				"-t",
+				"500",
+				"*:E"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Voice Modal Fix",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Retry Voice Modal Flow",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Refresh Keyboard Bundle",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"reverse",
+				"tcp:8081",
+				"tcp:8081"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Restart Keyboard App",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"am",
+				"force-stop",
+				"com.byokchat.mobile"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Relative Keyboard Gap",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Relative Keyboard Check",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\validate_app.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Relative Keyboard Gap",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--runtime",
+				"--no-node"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Chat Test Device",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"devices"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Chat Test Metro",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--no-node",
+				"--json"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Chat Smoke Script",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\test_chat.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Live Chat Smoke Test",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Chat Formatting",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Markdown Type Error",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Markdown Renderer",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Markdown Unit Tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Formatted OpenAI Chat",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"25",
+				"--prompt",
+				"Resume os debates atuais sobre inteligencia artificial na Europa em setembro de 2026 usando titulos e listas Markdown e separa factos de previsoes."
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Validate Chat Project",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Check Markdown Runtime Error",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"logcat",
+				"-d",
+				"-t",
+				"300",
+				"*:E"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Markdown Gap Fix",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Markdown Gap Fix",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Growing Markdown Response",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"30",
+				"--prompt",
+				"Analisa um tema atual de inteligencia artificial na Europa em setembro de 2026. Responde com tres paragrafos curtos, dois titulos Markdown e uma lista com tres pontos. Nao uses linhas vazias repetidas."
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Validate Markdown Layout",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Compile Scroll Chat Test",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"-m",
+				"py_compile",
+				"scripts\\test_chat.py"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Typecheck Scroll Chat UI",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Chat End Navigation",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"35",
+				"--check-scroll",
+				"--prompt",
+				"Faz uma analise detalhada dos principais impactos economicos, sociais e regul regulatorios da inteligencia artificial na Europa em setembro de 2026. Explica os pontos com contexto e exemplos praticos."
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Chat Stream Logs",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"logcat",
+				"-d",
+				"-t",
+				"500",
+				"ReactNativeJS:V",
+				"*:S"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Dump Chat Stream UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"shell",
+				"uiautomator",
+				"dump",
+				"/sdcard/byok-chat-stream.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Read Stream Chat UI",
+			"type": "shell",
+			"command": "C:\\Users\\Askblue\\AppData\\Local\\Android\\Sdk\\platform-tools\\adb.exe",
+			"args": [
+				"-s",
+				"RFCX70QSR0Z",
+				"exec-out",
+				"cat",
+				"/sdcard/byok-chat-stream.xml"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Token Limit TypeScript",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Token Limit Request",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Rerun Markdown Token Tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Test Bounded Live Response",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"45",
+				"--prompt",
+				"Faz uma analise detalhada dos principais impactos economicos, sociais e regulatorios da inteligencia artificial na Europa em setembro de 2026, incluindo contexto, riscos, oportunidades e exemplos praticos."
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Typecheck Chat Changes",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Test Chat Changes",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Validate Chat Flows",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Validate Scroll To End",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\test_chat.py",
+				"--serial",
+				"RFCX70QSR0Z",
+				"--timeout",
+				"45",
+				"--check-scroll",
+				"--prompt",
+				"Faz uma analise detalhada dos principais impactos economicos, sociais e regulatorios da inteligencia artificial na Europa em setembro de 2026, com varios paragrafos e exemplos praticos."
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Scroll Typecheck",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\typescript\\bin\\tsc",
+				"--noEmit"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Scroll Tests",
+			"type": "shell",
+			"command": "C:\\Program Files\\nodejs\\node.exe",
+			"args": [
+				".\\node_modules\\jest\\bin\\jest.js",
+				"--runInBand"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Final Scroll Static Validation",
+			"type": "shell",
+			"command": "py.exe",
+			"args": [
+				"-3",
+				"scripts\\validate_app.py",
+				"--serial",
+				"RFCX70QSR0Z"
+			],
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}
