@@ -163,7 +163,10 @@ export default function App() {
             setAvailableVoices(portuguese);
             setSelectedVoice(portuguese[0]?.identifier);
         });
-        void getPiperVoiceStatus().then(setPiperStatus).catch((error: Error) => setPiperError(error.message));
+        void getPiperVoiceStatus().then((status) => {
+            setPiperStatus(status);
+            if (status === 'ready') setVoiceEngine('piper');
+        }).catch((error: Error) => setPiperError(error.message));
     }, []);
 
     useEffect(() => {
