@@ -13,6 +13,7 @@ Fundacao da Fase 0 para uma app mobile de chat com IA em BYOK.
 - Composer com escolha de modelo, ditado `pt-PT` e envio.
 - Modo de resposta Texto/Voz.
 - TTS com vozes disponiveis no dispositivo.
+- POC experimental de TTS Piper offline no Android, com voz `pt_PT-tugao-medium` descarregada sob pedido.
 - Inbox com projetos e conversas recentes.
 - Nome do utilizador guardado localmente no Secure Store, sem login remoto.
 - Conversas que podem ser associadas a projetos ou apagadas localmente.
@@ -32,6 +33,8 @@ npm test
 ```
 
 O reconhecimento de voz requer um development build. O Expo Go nao e suficiente para validar todas as permissoes e modulos nativos.
+
+O Piper requer uma APK/development build propria. O runtime nativo suporta `arm64-v8a` e `x86_64`; a voz portuguesa ocupa aproximadamente 63 MB e e guardada no armazenamento privado do dispositivo depois do download. O runtime `react-native-piper-tts` esta em alpha e sob GPL-3.0-or-later; validar a compatibilidade da licenca antes de qualquer distribuicao comercial.
 
 ```powershell
 npx expo start

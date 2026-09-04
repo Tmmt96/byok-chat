@@ -58,6 +58,7 @@ import { testCustomApiConnection } from './src/providers/custom-api';
 import { availableModels, initialModel, maxResponseTokens, type ModelDefinition } from './src/features/models';
 import { stripMarkdownForSpeech } from './src/features/markdown';
 import { speakResponse } from './src/features/voice';
+import { downloadPiperVoice, getPiperVoiceStatus, speakPiperResponse, stopPiper, type PiperVoiceStatus } from './src/features/piper';
 import { colors, palette } from './src/theme';
 import { styles } from './src/theme.styles';
 
@@ -112,6 +113,10 @@ export default function App() {
     const [newProjectName, setNewProjectName] = useState('');
     const [availableVoices, setAvailableVoices] = useState<Speech.Voice[]>([]);
     const [selectedVoice, setSelectedVoice] = useState<string | undefined>();
+    const [voiceEngine, setVoiceEngine] = useState<'system' | 'piper'>('system');
+    const [piperStatus, setPiperStatus] = useState<PiperVoiceStatus>('unavailable');
+    const [piperProgress, setPiperProgress] = useState(0);
+    const [piperError, setPiperError] = useState<string>();
     const [speakingMessageId, setSpeakingMessageId] = useState<string>();
     const speakingRequestId = useRef(0);
     const [apiKey, setApiKey] = useState('');
@@ -158,6 +163,7 @@ export default function App() {
             setAvailableVoices(portuguese);
             setSelectedVoice(portuguese[0]?.identifier);
         });
+        void getPiperVoiceStatus().then(setPiperStatus).catch((error: Error) => setPiperError(error.message));
     }, []);
 
     useEffect(() => {
@@ -376,6 +382,7 @@ export default function App() {
     const stopSpeaking = () => {
         speakingRequestId.current += 1;
         Speech.stop();
+        stopPiper();
         setSpeakingMessageId(undefined);
     };
 
@@ -384,11 +391,39 @@ export default function App() {
         if (!speechText) return;
         const requestId = ++speakingRequestId.current;
         Speech.stop();
+        stopPiper();
         setSpeakingMessageId(message.id);
         const finishSpeaking = () => {
             if (speakingRequestId.current === requestId) setSpeakingMessageId(undefined);
         };
+        if (voiceEngine === 'piper') {
+            void speakPiperResponse(speechText, { onDone: finishSpeaking, onStopped: finishSpeaking, onError: finishSpeaking }).catch(finishSpeaking);
+            return;
+        }
         speakResponse(speechText, selectedVoice, { onDone: finishSpeaking, onStopped: finishSpeaking, onError: finishSpeaking });
+    };
+
+    const handleDownloadPiper = async () => {
+        if (piperStatus === 'downloading') return;
+        setPiperStatus('downloading');
+        setPiperProgress(0);
+        setPiperError(undefined);
+        try {
+            await downloadPiperVoice(setPiperProgress);
+            setPiperStatus('ready');
+            setVoiceEngine('piper');
+        } catch (error) {
+            setPiperStatus('not-downloaded');
+            setPiperError(error instanceof Error ? error.message : String(error));
+        }
+    };
+
+    const selectPiper = () => {
+        if (piperStatus === 'ready') {
+            setVoiceEngine('piper');
+            return;
+        }
+        void handleDownloadPiper();
     };
 
     useEffect(() => {
@@ -541,7 +576,15 @@ export default function App() {
                             voices={availableVoices}
                             selectedVoice={selectedVoice}
                             onVoicePress={() => setVoiceSheetOpen(true)}
-                            onPreviewVoice={() => Speech.speak('Esta é a voz escolhida para as respostas.', { voice: selectedVoice, language: 'pt-PT' })}
+                            voiceEngine={voiceEngine}
+                            piperStatus={piperStatus}
+                            piperProgress={piperProgress}
+                            piperError={piperError}
+                            onPiperPress={selectPiper}
+                            onPreviewVoice={() => {
+                                if (voiceEngine === 'piper') void speakPiperResponse('Esta é a voz Piper escolhida para as respostas.');
+                                else Speech.speak('Esta é a voz escolhida para as respostas.', { voice: selectedVoice, language: 'pt-PT' });
+                            }}
                             paletteId={paletteId}
                             onPaletteChange={setPaletteId}
                             onBack={() => setTab('home')}
@@ -565,7 +608,7 @@ export default function App() {
                     }}
                     onDelete={() => activeConversation && deleteConversation(activeConversation.id)}
                 />
-                <VoiceSheet visible={voiceSheetOpen} voices={availableVoices} selectedVoice={selectedVoice} onSelect={(voice) => { setSelectedVoice(voice); setVoiceSheetOpen(false); }} onClose={() => setVoiceSheetOpen(false)} />
+                <VoiceSheet visible={voiceSheetOpen} voices={availableVoices} selectedVoice={selectedVoice} onSelect={(voice) => { setSelectedVoice(voice); setVoiceEngine('system'); setVoiceSheetOpen(false); }} onClose={() => setVoiceSheetOpen(false)} />
                 <ProjectSheet
                     visible={Boolean(projectSheetConversationId)}
                     projects={projects}
@@ -782,7 +825,7 @@ function TypingIndicator() {
     return <View accessible accessibilityLabel="A preparar resposta" style={styles.typingIndicator}><Svg width="42" height="20" viewBox="0 0 42 20"><AnimatedCircle cx="7" cy="10" r="4" fill={colors.terracotta} opacity={dotOpacities[0]} /><AnimatedCircle cx="21" cy="10" r="4" fill={colors.terracotta} opacity={dotOpacities[1]} /><AnimatedCircle cx="35" cy="10" r="4" fill={colors.terracotta} opacity={dotOpacities[2]} /></Svg></View>;
 }
 
-function SettingsScreen({ keyConfigured, onOpenOpenAIKey, onDeleteOpenAIKey, customApiProfiles, onNewCustomApi, onEditCustomApi, onDeleteCustomApi, userName, nameDraft, onNameChange, onSaveName, voices, selectedVoice, onVoicePress, onPreviewVoice, paletteId, onPaletteChange, onBack }: {
+function SettingsScreen({ keyConfigured, onOpenOpenAIKey, onDeleteOpenAIKey, customApiProfiles, onNewCustomApi, onEditCustomApi, onDeleteCustomApi, userName, nameDraft, onNameChange, onSaveName, voices, selectedVoice, onVoicePress, onPreviewVoice, voiceEngine, piperStatus, piperProgress, piperError, onPiperPress, paletteId, onPaletteChange, onBack }: {
     keyConfigured: boolean;
     onOpenOpenAIKey: () => void;
     onDeleteOpenAIKey: () => void;
@@ -798,11 +841,17 @@ function SettingsScreen({ keyConfigured, onOpenOpenAIKey, onDeleteOpenAIKey, cus
     selectedVoice?: string;
     onVoicePress: () => void;
     onPreviewVoice: () => void;
+    voiceEngine: 'system' | 'piper';
+    piperStatus: PiperVoiceStatus;
+    piperProgress: number;
+    piperError?: string;
+    onPiperPress: () => void;
     paletteId: string;
     onPaletteChange: (value: string) => void;
     onBack: () => void;
 }) {
-    const selectedVoiceName = voices.find((voice) => voice.identifier === selectedVoice)?.name ?? 'Escolher no dispositivo';
+    const selectedVoiceName = voiceEngine === 'piper' ? 'Piper · Tugão' : voices.find((voice) => voice.identifier === selectedVoice)?.name ?? 'Escolher no dispositivo';
+    const piperStatusText = piperStatus === 'ready' ? 'Voz offline instalada neste dispositivo' : piperStatus === 'downloading' ? `A descarregar · ${Math.round(piperProgress * 100)}%` : piperStatus === 'native-missing' ? 'Recompilar o development build Android' : piperStatus === 'unavailable' ? 'Disponível apenas no Android' : 'Descarregar voz pt-PT · 63 MB';
     return (
         <ScrollView contentContainerStyle={styles.settingsContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <View style={styles.settingsHeader}>
@@ -892,6 +941,15 @@ function SettingsScreen({ keyConfigured, onOpenOpenAIKey, onDeleteOpenAIKey, cus
                     <Volume2 size={16} color={colors.terracotta} />
                     <Text style={styles.previewText}>Pré-escutar voz</Text>
                 </Pressable>
+                <Pressable onPress={onPiperPress} disabled={piperStatus === 'downloading' || piperStatus === 'unavailable' || piperStatus === 'native-missing'} accessibilityLabel="Ativar Piper offline" style={styles.settingCard}>
+                    <View style={[styles.settingIcon, styles.voiceIcon]}><ShieldCheck size={17} color={colors.deep} /></View>
+                    <View style={styles.rowCopy}>
+                        <Text style={styles.rowTitle}>{voiceEngine === 'piper' ? 'Piper offline ativo' : 'Piper offline'}</Text>
+                        <Text style={styles.rowSub}>{piperStatusText}</Text>
+                    </View>
+                    {piperStatus === 'ready' && voiceEngine === 'piper' && <Check size={17} color={colors.terracotta} />}
+                </Pressable>
+                {piperError && <Text style={styles.providerError}>{piperError}</Text>}
             </View>
 
             <View style={styles.settingsSection}>
@@ -1043,6 +1101,6 @@ function ChatOptionsSheet({ visible, onClose, onNewConversation, onAddToProject,
     </Modal>;
 }
 
-function VoiceSheet({ visible, voices, selectedVoice, onSelect, onClose }: { visible: boolean; voices: Speech.Voice[]; selectedVoice?: string; onSelect: (voice: string) => void; onClose: () => void }) {
-    return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><SheetFrame><View style={styles.sheetHeader}><Text style={styles.sheetTitle}>Voz da IA</Text><Pressable onPress={onClose} accessibilityLabel="Fechar"><X size={20} color={colors.deep} /></Pressable></View>{voices.length === 0 ? <Text style={styles.noVoices}>Nenhuma voz pt-PT foi encontrada neste dispositivo.</Text> : voices.map((voice) => <Pressable key={voice.identifier} onPress={() => onSelect(voice.identifier)} style={styles.sheetRow}><Volume2 size={17} color={colors.terracotta} /><View style={styles.rowCopy}><Text style={styles.rowTitle}>{voice.name}</Text><Text style={styles.rowSub}>{voice.language} · {voice.quality}</Text></View>{selectedVoice === voice.identifier && <Check size={17} color={colors.terracotta} />}</Pressable>)}</SheetFrame></Modal>;
+function VoiceSheet({ visible, voices, selectedVoice, onSelect, onClose }: { visible: boolean; voices: Speech.Voice[]; selectedVoice?: string; onSelect: (voice?: string) => void; onClose: () => void }) {
+    return <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}><SheetFrame><View style={styles.sheetHeader}><Text style={styles.sheetTitle}>Voz da IA</Text><Pressable onPress={onClose} accessibilityLabel="Fechar"><X size={20} color={colors.deep} /></Pressable></View><Pressable onPress={() => onSelect(undefined)} style={styles.sheetRow}><Volume2 size={17} color={colors.terracotta} /><View style={styles.rowCopy}><Text style={styles.rowTitle}>Voz do dispositivo</Text><Text style={styles.rowSub}>Escolha automática do Android</Text></View>{selectedVoice === undefined && <Check size={17} color={colors.terracotta} />}</Pressable>{voices.length === 0 ? <Text style={styles.noVoices}>Nenhuma voz pt-PT foi encontrada neste dispositivo.</Text> : voices.map((voice) => <Pressable key={voice.identifier} onPress={() => onSelect(voice.identifier)} style={styles.sheetRow}><Volume2 size={17} color={colors.terracotta} /><View style={styles.rowCopy}><Text style={styles.rowTitle}>{voice.name}</Text><Text style={styles.rowSub}>{voice.language} · {voice.quality}</Text></View>{selectedVoice === voice.identifier && <Check size={17} color={colors.terracotta} />}</Pressable>)}</SheetFrame></Modal>;
 }
