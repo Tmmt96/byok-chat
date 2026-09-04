@@ -4,7 +4,7 @@ jest.mock('expo-speech', () => ({
 }));
 
 import * as Speech from 'expo-speech';
-import { speakResponse } from '../src/features/voice';
+import { speakResponse, splitSpeechText } from '../src/features/voice';
 
 describe('voice responses', () => {
     beforeEach(() => jest.clearAllMocks());
@@ -31,9 +31,31 @@ describe('voice responses', () => {
 
         const options = (Speech.speak as jest.Mock).mock.calls[0][1];
         options.onDone();
-        options.onStopped();
 
         expect(onDone).toHaveBeenCalledTimes(1);
+        expect(onStopped).not.toHaveBeenCalled();
+
+        speakResponse('Resposta interrompida', undefined, { onStopped });
+        const stoppedOptions = (Speech.speak as jest.Mock).mock.calls[1][1];
+        stoppedOptions.onStopped();
+
         expect(onStopped).toHaveBeenCalledTimes(1);
+    });
+
+    it('splits long responses below the Expo speech limit', () => {
+        const text = 'Texto longo. '.repeat(600);
+        const chunks = splitSpeechText(text);
+
+        expect(chunks.length).toBeGreaterThan(1);
+        expect(chunks.every((chunk) => chunk.length <= 3900)).toBe(true);
+
+        speakResponse(text);
+        for (let index = 0; index < chunks.length; index += 1) {
+            const options = (Speech.speak as jest.Mock).mock.calls[index][1];
+            options.onDone();
+        }
+
+        expect((Speech.speak as jest.Mock).mock.calls.every(([chunk]) => chunk.length <= 3900)).toBe(true);
+        expect((Speech.speak as jest.Mock).mock.calls).toHaveLength(chunks.length);
     });
 });
